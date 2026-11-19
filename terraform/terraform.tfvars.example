@@ -1,0 +1,18 @@
+region = "ap-northeast-1"
+name   = "hashi"
+
+# 何も指定しなければ hashi 専用の VPC（パブリックサブネット 2 つ）を新しく作る。
+# vpc_cidr = "10.250.0.0/16"
+
+# SSH してよい宛先（既定はどこへでも）
+# ssh_target_cidrs = ["0.0.0.0/0"]
+
+# 例: DB への疎通確認も許可する
+# extra_egress_rules = [
+#   { description = "PostgreSQL", protocol = "tcp", port = 5432, cidrs = ["10.0.0.0/16"] },
+# ]
+
+# 既存の VPC に置く場合だけ指定する
+# vpc_id           = "vpc-xxxxxxxx"
+# subnet_ids       = ["subnet-aaaaaaaa", "subnet-bbbbbbbb"]
+# assign_public_ip = false

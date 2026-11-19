@@ -1,0 +1,6 @@
+/bin/
+/dist/
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/terraform.tfvars
+terraform/.terraform.lock.hcl

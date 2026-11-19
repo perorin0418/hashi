@@ -1,0 +1,9 @@
+#!/bin/bash
+# hashi-run <base64 で符号化したシェルのコマンド>
+# ECS Exec のコマンドはシェルを通らず引用符の扱いも限られるため、hashi は文字列を base64 にして渡す。
+set -euo pipefail
+if [ $# -eq 0 ]; then
+  exec /bin/bash -l
+fi
+cmd="$(printf '%s' "$1" | base64 -d)"
+exec /bin/bash -lc "$cmd"
