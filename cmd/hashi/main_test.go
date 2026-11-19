@@ -90,3 +90,49 @@ func TestIDs(t *testing.T) {
 		t.Fatal("clusterName")
 	}
 }
+
+func TestIsNewer(t *testing.T) {
+	cases := []struct {
+		latest, current string
+		want            bool
+	}{
+		{"v0.2.0", "v0.1.0", true},
+		{"v0.1.0", "v0.1.0", false},
+		{"v0.1.0", "v0.2.0", false},
+		{"v1.0.0", "v0.9.9", true},
+		{"v0.1.1", "v0.1.0-3-gabcdef-dirty", true},
+		{"v0.1.0", "v0.1.0-3-gabcdef", false},
+		{"v0.1.0", "dev", true},
+		{"v0.1.0", "20261119", true},
+		{"latest", "v0.1.0", false},
+	}
+	for _, c := range cases {
+		if got := isNewer(c.latest, c.current); got != c.want {
+			t.Errorf("isNewer(%q, %q) = %v, want %v", c.latest, c.current, got, c.want)
+		}
+	}
+}
+
+func TestFindChecksum(t *testing.T) {
+	sums := []byte("aaa  hashi-linux-amd64\nBBB *hashi-windows-amd64.exe\n")
+	if v, err := findChecksum(sums, "hashi-windows-amd64.exe"); err != nil || v != "bbb" {
+		t.Fatal(v, err)
+	}
+	if _, err := findChecksum(sums, "hashi-darwin-arm64"); err == nil {
+		t.Fatal("ないものはエラー")
+	}
+}
+
+func TestReplaceExecutable(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "hashi")
+	os.WriteFile(p, []byte("old"), 0o755)
+	if err := replaceExecutable(p, []byte("new")); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(p); string(b) != "new" {
+		t.Fatal(string(b))
+	}
+	if _, err := os.Stat(p + ".new"); !os.IsNotExist(err) {
+		t.Fatal(".new が残っている")
+	}
+}

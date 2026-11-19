@@ -32,6 +32,7 @@ const usage = `hashi — 一時的な ECS タスクを踏み台にするコマ�
   ls [--all]            hashi が起動した動いているタスクを一覧する（既定は自分のものだけ）
   stop <タスクID>...    タスクを止める（--mine で自分のものをすべて止める）
   envs                  設定ファイルの接続先を一覧する
+  self-update           GitHub の最新リリースに更新する（--check で確認だけ）
   version               バージョンを表示する
 
 start / ssh / exec の共通オプション:
@@ -73,6 +74,8 @@ func run(args []string) error {
 	case "version":
 		fmt.Println(version)
 		return nil
+	case "self-update":
+		return cmdSelfUpdate(rest)
 	case "help", "-h", "--help":
 		gf.Usage()
 		return nil

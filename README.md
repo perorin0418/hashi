@@ -72,7 +72,7 @@ Terraform で `cpu_architecture = "ARM64"` にした場合は `PLATFORM=linux/ar
 ## 使う人の準備
 
 1. [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) をインストールする。
-2. hashi をビルドして PATH の通った場所に置く（`make build` で `bin/hashi`、`make dist` で各 OS 向け）。
+2. [リリース](https://github.com/perorin0418/hashi/releases/latest)から自分の OS 向けの実行ファイル（`hashi-windows-amd64.exe`、`hashi-linux-amd64`、`hashi-darwin-arm64` など）を取得し、`hashi`（Windows は `hashi.exe`）に名前を変えて PATH の通った場所に置く。自分でビルドするなら `make build`。
 3. 設定ファイルを書く（次の節）。
 
 ### 設定ファイル
@@ -114,11 +114,22 @@ hashi -e dev ls                          # 自分のタスクの一覧（--all �
 hashi -e dev attach <タスクID>           # 動いているタスクに入り直す
 hashi -e dev stop <タスクID>             # 止める（--mine で自分のものをすべて）
 hashi envs                               # 設定の接続先の一覧
+hashi self-update                        # 最新のリリースに更新する（--check で確認だけ）
 ```
 
 SSH はパスワード認証で使う想定です。`hashi ssh` の中でパスワードを聞かれたら入力します。
 
 起動から入れるようになるまで、イメージの取得などで 30 秒〜1 分ほどかかります。
+
+## 更新とリリース
+
+`hashi self-update` は、GitHub の最新リリースから自分の OS・CPU 向けの実行ファイルを取得します。`checksums.txt`（各ファイルの SHA-256 の値）と照合してから入れ替えます。置いた場所に書き込み権限がなければ、権限のあるユーザーで実行します（例: `sudo hashi self-update`）。
+
+新しい版を出すときは、変更をコミットして `main` にプッシュしたうえで、次を実行します（`gh` でログイン済みであること）。タグを付けてプッシュし、Linux（amd64・arm64）、Mac（amd64・arm64）、Windows（amd64）向けにビルドして、`checksums.txt` と一緒にリリースへアップロードします。
+
+```bash
+make release TAG=v0.2.0
+```
 
 ## 注意
 
