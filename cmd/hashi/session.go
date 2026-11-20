@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -84,6 +86,9 @@ func (c *client) openSession(ctx context.Context, plugin, taskArn, runtimeID, co
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	defer signal.Stop(sig)
 
+	restore := disableFlowControl()
+	defer restore()
+
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("%s を起動できません: %w", pluginName, err)
 	}
@@ -105,6 +110,33 @@ func (c *client) openSession(ctx context.Context, plugin, taskArn, runtimeID, co
 				_ = cmd.Process.Kill()
 			}
 		}
+	}
+}
+
+// disableFlowControl は手元の端末の XON/XOFF（Ctrl+S で出力を止め、Ctrl+Q で再開する端末の機能）を切り、
+// 元に戻す関数を返す。
+// session-manager-plugin（Linux / Mac 版）は端末を `stty cbreak -echo` にするだけで XON/XOFF を残すため、
+// Ctrl+S が手元の端末に取られて接続先へ届かない（接続先のアプリで Ctrl+S が効かず、画面も止まる）。
+// Windows 版のプラグインは端末の設定に stty を使わないので、何もしない。
+func disableFlowControl() func() {
+	if runtime.GOOS == "windows" {
+		return func() {}
+	}
+	var saved bytes.Buffer
+	get := exec.Command("stty", "-g")
+	get.Stdin, get.Stdout = os.Stdin, &saved
+	if err := get.Run(); err != nil {
+		return func() {} // 端末でない（パイプなど）か stty が無い
+	}
+	set := exec.Command("stty", "-ixon")
+	set.Stdin = os.Stdin
+	if err := set.Run(); err != nil {
+		return func() {}
+	}
+	return func() {
+		r := exec.Command("stty", strings.TrimSpace(saved.String()))
+		r.Stdin = os.Stdin
+		_ = r.Run()
 	}
 }
 
